@@ -39,3 +39,14 @@ python -m harness.loop "Create notes.txt containing the output of 'uname -a'"
 ```
 
 Things to notice when you run it for real: what the model does after a tool error, and why `run_shell` with no confirmation step is dangerous (step 6 fixes that).
+
+## Step 3: streaming and tracing
+
+Two more pieces to write, checked by `pytest exercises/step3`:
+
+1. **Streaming and events** (`run` in `src/harness/loop.py`, see its docstring): use `model.stream` so text arrives as it is generated, and report each token, model reply and tool result through `on_event`.
+2. **Tracing** (`src/harness/tracing.py`): `JsonlTracer` appends every event to a `.jsonl` file, one JSON object per line.
+
+Then make `python -m harness.loop` print tokens live and save a trace, run a multi-tool question, and read the trace back with `jq` to see every step the agent took.
+
+`harness.testing.ScriptedModel` is the fake model all the tests use; it can `invoke` and `stream`.
