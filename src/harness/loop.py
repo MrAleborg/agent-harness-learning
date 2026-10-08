@@ -27,8 +27,10 @@ def run(model, prompt: str, max_turns: int = 10) -> str:
 
 
 if __name__ == "__main__":
+    import os
     import sys
-    from langchain_anthropic import ChatAnthropic
+    from langchain_ollama import ChatOllama
 
-    model = ChatAnthropic(model="claude-sonnet-5-5").bind_tools(list(TOOLS.values()))
+    # needs a model that supports tool calling, e.g. llama3.1 or qwen3
+    model = ChatOllama(model=os.environ.get("OLLAMA_MODEL", "llama3.1")).bind_tools(list(TOOLS.values()))
     print(run(model, " ".join(sys.argv[1:]) or "What is 1234 + 5678?"))
