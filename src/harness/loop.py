@@ -1,4 +1,4 @@
-"""Step 1: the agent loop, written by hand so every turn is visible."""
+"""The agent loop, written by hand so every turn is visible."""
 from langchain_core.messages import HumanMessage, ToolMessage
 from langchain_core.tools import tool
 
@@ -18,8 +18,17 @@ def multiply(a:int, b:int) -> int:
 TOOLS = {t.name: t for t in [add, multiply, read_file, write_file, run_shell, fetch_url]}
 
 
-def run(model, prompt: str, max_turns: int = 10) -> str:
-    """Call the model, run any tools it asks for, feed results back, repeat."""
+def run(model, prompt: str, max_turns: int = 10, on_event=lambda event: None) -> str:
+    """Call the model, run any tools it asks for, feed results back, repeat.
+
+    Step 3 exercise: stream the model's reply and report what happens through `on_event`.
+    - Use model.stream(messages) instead of model.invoke(messages). It yields AIMessageChunks;
+      add them together (chunk1 + chunk2 + ...) to rebuild the full reply, tool calls included.
+    - Call on_event with a dict for each of these, in order:
+        {"type": "token", "text": <chunk text>}                   for every non-empty streamed chunk
+        {"type": "model_reply", "content": ..., "tool_calls": ...} once the reply is complete
+        {"type": "tool_result", "name": ..., "content": ..., "status": "success" or "error"}
+    """
     messages = [HumanMessage(prompt)]
     for _ in range(max_turns):
         reply = model.invoke(messages)
