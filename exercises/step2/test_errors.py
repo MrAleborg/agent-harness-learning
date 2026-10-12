@@ -1,16 +1,8 @@
 from langchain_core.messages import AIMessage, ToolMessage
 
 from harness.loop import run
+from harness.testing import ScriptedModel
 
-
-class ScriptedModel:
-    def __init__(self, *replies):
-        self.replies = list(replies)
-        self.seen = []
-
-    def invoke(self, messages):
-        self.seen.append(list(messages))
-        return self.replies.pop(0)
 
 
 def call(name, args):
