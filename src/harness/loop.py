@@ -2,6 +2,7 @@
 from langchain_core.messages import HumanMessage, ToolMessage
 from langchain_core.tools import tool
 
+from harness.context import trim_history, truncate_tool_output
 from harness.tools import fetch_url, read_file, run_shell, write_file
 
 
@@ -37,7 +38,8 @@ def run(model, prompt: str, max_turns: int = 10, on_event=lambda event: None, ma
     messages = [HumanMessage(prompt)]
     for _ in range(max_turns):
         reply = None
-        for chunk in model.stream(messages):
+        to_send = messages if max_context_tokens is None else trim_history(messages, max_context_tokens)
+        for chunk in model.stream(to_send):
             if chunk.content:
                 on_event({"type": "token", "text": chunk.content})
             reply = chunk if reply is None else reply + chunk
@@ -54,6 +56,7 @@ def run(model, prompt: str, max_turns: int = 10, on_event=lambda event: None, ma
                 content, status = str(TOOLS[call["name"]].invoke(call["args"])), "success"
             except Exception as e:
                 content, status = str(e), "error"
+            content = truncate_tool_output(content)
             messages.append(ToolMessage(content, tool_call_id=call["id"], status=status))
             on_event({"type": "tool_result", "name": call["name"], "content": content, "status": status})
     raise RuntimeError(f"no final answer after {max_turns} turns")
