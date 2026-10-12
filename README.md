@@ -20,8 +20,8 @@ Each step ends with something you can run and a test.
 python -m venv .venv && . .venv/bin/activate
 pip install -e '.[dev]'
 pytest                                   # runs the loop against a scripted fake model
-ollama pull llama3.1                     # any tool-calling model works
-OLLAMA_MODEL=llama3.1 python -m harness.loop "What is 1234 + 5678?"
+export OPENROUTER_API_KEY=sk-or-...      # https://openrouter.ai/keys
+python -m harness.loop "What is 1234 + 5678?"   # OPENROUTER_MODEL defaults to openrouter/free
 ```
 
 Exercise: add a second tool (for example `multiply`) and ask a question that needs both.

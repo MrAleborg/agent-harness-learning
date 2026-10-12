@@ -1,4 +1,6 @@
 """Step 3 exercise: record every event of a run so it can be read back and debugged."""
+import json
+import time
 
 
 class JsonlTracer:
@@ -12,4 +14,5 @@ class JsonlTracer:
         self.path = path
 
     def __call__(self, event: dict) -> None:
-        raise NotImplementedError("step 3: implement JsonlTracer")
+        with open(self.path, "a") as file:
+            file.write(json.dumps({**event, "time": time.time()}) + "\n")
