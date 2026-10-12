@@ -50,3 +50,12 @@ Two more pieces to write, checked by `pytest exercises/step3`:
 Then make `python -m harness.loop` print tokens live and save a trace, run a multi-tool question, and read the trace back with `jq` to see every step the agent took.
 
 `harness.testing.ScriptedModel` is the fake model all the tests use; it can `invoke` and `stream`.
+
+## Step 4: context management
+
+Long runs eventually overflow the model's context window, and every token you send costs time. Checked by `pytest exercises/step4`:
+
+1. **Helpers** (`src/harness/context.py`): `estimate_tokens`, `truncate_tool_output` and `trim_history`. The docstrings give the rules; the subtle one is never sending a tool result whose tool call was trimmed away.
+2. **Wire them in** (`run` in `src/harness/loop.py`, see its docstring): truncate every tool result, and trim what the model sees when `max_context_tokens` is set.
+
+Stretch goal, no tests: instead of dropping old messages, ask the model to summarize them into one message. Compare the two on a long multi-tool run using your traces from step 3.

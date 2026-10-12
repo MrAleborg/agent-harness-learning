@@ -2,6 +2,7 @@
 from langchain_core.messages import HumanMessage, ToolMessage
 from langchain_core.tools import tool
 
+from harness.context import trim_history, truncate_tool_output
 from harness.tools import fetch_url, read_file, run_shell, write_file
 
 
@@ -18,8 +19,13 @@ def multiply(a:int, b:int) -> int:
 TOOLS = {t.name: t for t in [add, multiply, read_file, write_file, run_shell, fetch_url]}
 
 
-def run(model, prompt: str, max_turns: int = 10, on_event=lambda event: None) -> str:
+def run(model, prompt: str, max_turns: int = 10, on_event=lambda event: None, max_context_tokens=None) -> str:
     """Call the model, run any tools it asks for, feed results back, repeat.
+
+    Step 4 exercise: keep the context small (helpers in harness/context.py).
+    - Pass every tool result through truncate_tool_output before it becomes a ToolMessage.
+    - When max_context_tokens is set, send the model trim_history(messages, max_context_tokens)
+      instead of the full history. Keep the full history in `messages` itself.
 
     Step 3 exercise: stream the model's reply and report what happens through `on_event`.
     - Use model.stream(messages) instead of model.invoke(messages). It yields AIMessageChunks;
@@ -32,7 +38,8 @@ def run(model, prompt: str, max_turns: int = 10, on_event=lambda event: None) ->
     messages = [HumanMessage(prompt)]
     for _ in range(max_turns):
         reply = None
-        for chunk in model.stream(messages):
+        to_send = messages if max_context_tokens is None else trim_history(messages, max_context_tokens)
+        for chunk in model.stream(to_send):
             if chunk.content:
                 on_event({"type": "token", "text": chunk.content})
             reply = chunk if reply is None else reply + chunk
@@ -49,6 +56,7 @@ def run(model, prompt: str, max_turns: int = 10, on_event=lambda event: None) ->
                 content, status = str(TOOLS[call["name"]].invoke(call["args"])), "success"
             except Exception as e:
                 content, status = str(e), "error"
+            content = truncate_tool_output(content)
             messages.append(ToolMessage(content, tool_call_id=call["id"], status=status))
             on_event({"type": "tool_result", "name": call["name"], "content": content, "status": status})
     raise RuntimeError(f"no final answer after {max_turns} turns")
