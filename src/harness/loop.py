@@ -18,8 +18,13 @@ def multiply(a:int, b:int) -> int:
 TOOLS = {t.name: t for t in [add, multiply, read_file, write_file, run_shell, fetch_url]}
 
 
-def run(model, prompt: str, max_turns: int = 10, on_event=lambda event: None) -> str:
+def run(model, prompt: str, max_turns: int = 10, on_event=lambda event: None, max_context_tokens=None) -> str:
     """Call the model, run any tools it asks for, feed results back, repeat.
+
+    Step 4 exercise: keep the context small (helpers in harness/context.py).
+    - Pass every tool result through truncate_tool_output before it becomes a ToolMessage.
+    - When max_context_tokens is set, send the model trim_history(messages, max_context_tokens)
+      instead of the full history. Keep the full history in `messages` itself.
 
     Step 3 exercise: stream the model's reply and report what happens through `on_event`.
     - Use model.stream(messages) instead of model.invoke(messages). It yields AIMessageChunks;
